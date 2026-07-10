@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Alphabet Shells 🐚 — Alki Beach Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ocean:#1e88c9; --ocean-deep:#0d5e96; --sand:#fdeec9; --sand-deep:#f5d8a0;
+    --coral:#ff6f61; --seafoam:#7fd8c9; --sun:#ffd23f; --ink:#20415c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Fredoka', 'Comic Sans MS', system-ui, sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#aee3f7 0%,#7fc9ec 30%,var(--ocean) 62%,var(--sand) 62.5%,var(--sand-deep) 100%);
+    overflow:hidden; display:flex; flex-direction:column; align-items:center;
+    user-select:none;
+  }
+  /* sun */
+  .sun{position:fixed; top:22px; left:26px; width:70px; height:70px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #fff3b0, var(--sun));
+    box-shadow:0 0 40px 12px rgba(255,210,63,.55); animation:sunPulse 4s ease-in-out infinite;}
+  @keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  /* waves */
+  .waves{position:fixed; left:0; right:0; top:56%; height:60px; pointer-events:none; opacity:.5;}
+  .waves svg{width:200%; height:100%; animation:drift 9s linear infinite;}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important;} }
+
+  header{width:100%; max-width:520px; padding:16px 16px 4px; display:flex; justify-content:space-between; align-items:center; z-index:2;}
+  .brand{font-weight:700; font-size:15px; color:#fff; text-shadow:0 1px 3px rgba(13,94,150,.5); line-height:1.15;}
+  .brand small{display:block; font-weight:400; font-size:11px; opacity:.9;}
+  .score{background:#fff; border-radius:999px; padding:6px 14px; font-weight:700; font-size:16px;
+    box-shadow:0 3px 0 rgba(13,94,150,.25); display:flex; gap:6px; align-items:center;}
+
+  main{flex:1; width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 16px 20px; z-index:2;}
+
+  .prompt-card{
+    background:#fff; border-radius:28px; padding:18px 26px; text-align:center; width:100%;
+    box-shadow:0 6px 0 rgba(13,94,150,.18);
+  }
+  .prompt-emoji{font-size:64px; line-height:1; display:block; animation:bob 2.4s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  .prompt-word{font-size:30px; font-weight:700; letter-spacing:.5px; margin-top:6px;}
+  .prompt-word .first{color:var(--coral);}
+  .prompt-hint{font-size:14px; color:#6b8aa5; margin-top:2px;}
+  .hear-btn{margin-top:10px; border:none; background:var(--seafoam); color:var(--ink); font-family:inherit;
+    font-size:16px; font-weight:600; padding:8px 18px; border-radius:999px; cursor:pointer;
+    box-shadow:0 3px 0 #4db6a4;}
+  .hear-btn:active{transform:translateY(2px); box-shadow:0 1px 0 #4db6a4;}
+
+  .question{font-size:18px; font-weight:600; color:#fff; text-shadow:0 1px 3px rgba(13,94,150,.5); margin:16px 0 10px; text-align:center;}
+
+  .shells{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; width:100%;}
+  .shell{
+    position:relative; border:none; cursor:pointer; background:none; font-family:inherit;
+    width:104px; height:104px; transition:transform .15s;
+  }
+  .shell:focus-visible{outline:4px solid var(--sun); outline-offset:4px; border-radius:50%;}
+  .shell svg{width:100%; height:100%; filter:drop-shadow(0 4px 3px rgba(13,94,150,.3));}
+  .shell .letter{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:42px; font-weight:700; color:#fff; text-shadow:0 2px 3px rgba(0,0,0,.25); padding-top:14px;}
+  .shell:hover{transform:scale(1.07);}
+  .shell.correct{animation:pop .5s ease;}
+  .shell.wrong{animation:shake .4s ease;}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+  .feedback{min-height:34px; margin-top:14px; font-size:22px; font-weight:700; color:#fff; text-shadow:0 1px 3px rgba(13,94,150,.5); text-align:center;}
+
+  .stars{display:flex; gap:4px; margin-top:6px; font-size:20px; min-height:26px;}
+
+  /* start & win overlays */
+  .overlay{position:fixed; inset:0; background:rgba(13,94,150,.65); display:flex; align-items:center; justify-content:center; z-index:10; padding:20px;}
+  .panel{background:#fff; border-radius:30px; padding:30px 26px; max-width:380px; width:100%; text-align:center; box-shadow:0 10px 0 rgba(0,0,0,.15);}
+  .panel h1{font-size:30px; margin-bottom:6px;}
+  .panel p{font-size:16px; color:#557a99; margin-bottom:18px;}
+  .big-btn{border:none; background:var(--coral); color:#fff; font-family:inherit; font-size:22px; font-weight:700;
+    padding:14px 34px; border-radius:999px; cursor:pointer; box-shadow:0 5px 0 #d24b3e;}
+  .big-btn:active{transform:translateY(3px); box-shadow:0 2px 0 #d24b3e;}
+  .hidden{display:none;}
+
+  .confetti{position:fixed; top:-10px; font-size:24px; z-index:9; animation:fall linear forwards; pointer-events:none;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg);}}
+
+  @media (max-width:400px){
+    .shell{width:88px; height:88px;}
+    .shell .letter{font-size:36px;}
+    .prompt-emoji{font-size:54px;}
+  }
+</style>
+</head>
+<body>
+<div class="sun"></div>
+<div class="waves"><svg viewBox="0 0 1200 60" preserveAspectRatio="none"><path d="M0 30 Q75 0 150 30 T300 30 T450 30 T600 30 T750 30 T900 30 T1050 30 T1200 30 V60 H0 Z" fill="#ffffff"/></svg></div>
+
+<header>
+  <div class="brand">Alki Beach Academy<small>Alphabet Shells 🐚</small></div>
+  <div class="score">⭐ <span id="score">0</span></div>
+</header>
+
+<main>
+  <div class="prompt-card">
+    <span class="prompt-emoji" id="emoji">🌟</span>
+    <div class="prompt-word" id="word"></div>
+    <div class="prompt-hint">What letter does it start with?</div>
+    <button class="hear-btn" id="hearBtn">🔊 Hear it</button>
+  </div>
+
+  <div class="question">Tap the right shell!</div>
+
+  <div class="shells" id="shells"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="stars" id="stars"></div>
+</main>
+
+<div class="overlay" id="startOverlay">
+  <div class="panel">
+    <div style="font-size:56px">🐚</div>
+    <h1>Alphabet Shells</h1>
+    <p>A beachy letter game! Look at the picture, listen to the word, and tap the shell with the letter it starts with. Collect 10 stars to win!</p>
+    <button class="big-btn" id="startBtn">Play! 🏖️</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="winOverlay">
+  <div class="panel">
+    <div style="font-size:56px">🏆</div>
+    <h1>You did it!</h1>
+    <p id="winText">You collected 10 stars! The beach is proud of you! 🦀</p>
+    <button class="big-btn" id="againBtn">Play again 🔁</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const WORDS = [
+    ['🌟','Starfish'],['🦀','Crab'],['🐋','Whale'],['🐬','Dolphin'],['🐙','Octopus'],
+    ['🐢','Turtle'],['🐟','Fish'],['🦈','Shark'],['🌊','Wave'],['⛵','Boat'],
+    ['🏖️','Beach'],['🪸','Coral'],['🦭','Seal'],['🦅','Eagle'],['🪁','Kite'],
+    ['🍦','Ice cream'],['🕶️','Glasses'],['🧴','Lotion'],['🏰','Castle'],['🪣','Bucket'],
+    ['🦞','Lobster'],['🦐','Shrimp'],['🐚','Shell'],['🌴','Palm tree'],['⚓','Anchor'],
+    ['🧜','Mermaid'],['🤿','Diver'],['🦩','Flamingo'],['🐧','Penguin'],['🍉','Watermelon'],
+    ['🥥','Coconut'],['🩴','Flip flop'],['🎣','Rod'],['🧊','Ice'],['🥪','Sandwich'],
+    ['🍍','Pineapple'],['🦆','Duck'],['🪼','Jellyfish'],['🛟','Ring'],['🚤','Motorboat']
+  ];
+  const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const SHELL_COLORS=['#ff8a80','#ffb74d','#9575cd','#4fc3f7','#81c784','#f06292'];
+  const PRAISE=['Awesome! 🎉','Great job! 🌟','You got it! 🦀','Super! 🐬','Way to go! 🏖️'];
+  const OOPS=['Try again! 💪','Almost! 🐚','Keep looking! 👀'];
+  const GOAL=10;
+
+  let score=0, current=null, locked=false, usedIdx=[];
+  const $=id=>document.getElementById(id);
+
+  function speak(text){
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.rate=0.85; u.pitch=1.15;
+    speechSynthesis.speak(u);
+  }
+
+  function shellSVG(color){
+    return `<svg viewBox="0 0 100 100"><path d="M50 8 C74 8 92 30 92 55 C92 80 74 94 50 94 C26 94 8 80 8 55 C8 30 26 8 50 8 Z" fill="${color}"/><path d="M50 10 L50 92 M30 16 L40 90 M70 16 L60 90 M15 34 L30 84 M85 34 L70 84" stroke="rgba(255,255,255,.45)" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="90" rx="18" ry="6" fill="rgba(0,0,0,.12)"/></svg>`;
+  }
+
+  function pickWord(){
+    if(usedIdx.length===WORDS.length) usedIdx=[];
+    let i;
+    do{ i=Math.floor(Math.random()*WORDS.length); }while(usedIdx.includes(i));
+    usedIdx.push(i);
+    return WORDS[i];
+  }
+
+  function newRound(){
+    locked=false;
+    $('feedback').textContent='';
+    current=pickWord();
+    const [emoji,word]=current;
+    const first=word[0].toUpperCase();
+    $('emoji').textContent=emoji;
+    $('word').innerHTML=`<span class="first">${word[0]}</span>${word.slice(1)}`;
+
+    // options: correct + 2 distractors
+    const opts=new Set([first]);
+    while(opts.size<3){
+      const l=ALPHABET[Math.floor(Math.random()*26)];
+      opts.add(l);
+    }
+    const letters=[...opts].sort(()=>Math.random()-0.5);
+    const colors=[...SHELL_COLORS].sort(()=>Math.random()-0.5);
+
+    const box=$('shells'); box.innerHTML='';
+    letters.forEach((L,i)=>{
+      const b=document.createElement('button');
+      b.className='shell';
+      b.setAttribute('aria-label','Shell with letter '+L);
+      b.innerHTML=shellSVG(colors[i])+`<span class="letter">${L}</span>`;
+      b.onclick=()=>choose(b,L,first);
+      box.appendChild(b);
+    });
+    setTimeout(()=>speak(word),300);
+  }
+
+  function choose(btn,letter,correct){
+    if(locked) return;
+    if(letter===correct){
+      locked=true;
+      btn.classList.add('correct');
+      score++;
+      $('score').textContent=score;
+      $('feedback').textContent=PRAISE[Math.floor(Math.random()*PRAISE.length)];
+      $('stars').textContent='⭐'.repeat(score>GOAL?GOAL:score);
+      speak(PRAISE[0].replace(/[^\w\s!]/g,''));
+      burst(6);
+      setTimeout(()=>{ score>=GOAL ? win() : newRound(); },1200);
+    }else{
+      btn.classList.add('wrong');
+      $('feedback').textContent=OOPS[Math.floor(Math.random()*OOPS.length)];
+      setTimeout(()=>btn.classList.remove('wrong'),450);
+    }
+  }
+
+  function burst(n){
+    const bits=['🐚','⭐','🫧','🦀','🌟'];
+    for(let i=0;i<n;i++){
+      const s=document.createElement('div');
+      s.className='confetti';
+      s.textContent=bits[Math.floor(Math.random()*bits.length)];
+      s.style.left=(10+Math.random()*80)+'vw';
+      s.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(),3200);
+    }
+  }
+
+  function win(){
+    burst(18);
+    $('winOverlay').classList.remove('hidden');
+    speak('You did it! Amazing job!');
+  }
+
+  $('hearBtn').onclick=()=>current&&speak(current[1]);
+  $('startBtn').onclick=()=>{
+    $('startOverlay').classList.add('hidden');
+    score=0; $('score').textContent='0'; $('stars').textContent=''; usedIdx=[];
+    newRound();
+  };
+  $('againBtn').onclick=()=>{
+    $('winOverlay').classList.add('hidden');
+    score=0; $('score').textContent='0'; $('stars').textContent=''; usedIdx=[];
+    newRound();
+  };
+})();
+</script>
+</body>
+</html>
