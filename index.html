@@ -45,9 +45,13 @@
     position:fixed; inset:0; z-index:20;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:18px; padding:24px;
+    padding-top:calc(24px + env(safe-area-inset-top));
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
     text-align:center;
     color:#fff;
     background:radial-gradient(ellipse at 50% 30%, rgba(30,20,80,0.55), rgba(2,2,14,0.92) 75%);
+    overflow-y:auto;
+    touch-action:pan-y;
   }
   .hidden{ display:none !important; }
 
@@ -95,23 +99,59 @@
     text-shadow:0 0 10px rgba(255,225,77,0.7);
   }
 
-  .toggle-row{
-    display:flex; align-items:center; gap:10px;
-    background:rgba(255,255,255,0.06);
-    border:2px solid rgba(77,234,255,0.4);
-    border-radius:999px;
-    padding:10px 20px;
-    font-size:clamp(13px,3.4vw,17px);
+  .secondary-btn{
+    background:rgba(10,14,40,0.7);
     color:#e8f6ff;
-    box-shadow:0 0 14px rgba(77,234,255,0.15) inset;
+    border:2px solid rgba(77,234,255,0.6);
+    box-shadow:0 0 0 3px rgba(77,234,255,0.12), 0 6px 0 rgba(10,60,80,0.7), 0 0 18px rgba(77,234,255,0.35);
   }
-  .toggle-row input[type=checkbox]{
-    width:26px; height:26px; accent-color:var(--neon-magenta); cursor:pointer;
+  .secondary-btn:active{ box-shadow:0 0 0 3px rgba(77,234,255,0.12), 0 2px 0 rgba(10,60,80,0.7), 0 0 18px rgba(77,234,255,0.35); }
+
+  /* ---------- difficulty (hardness) selector ---------- */
+  .difficulty-label{
+    font-size:clamp(13px,3.4vw,17px);
+    color:#e8f6ff; opacity:0.85;
+  }
+  .difficulty-row{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+  }
+  .diff-btn{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:rgba(255,255,255,0.06);
+    border:2px solid rgba(77,234,255,0.35);
+    border-radius:18px;
+    padding:10px 18px;
+    font-size:clamp(14px,3.8vw,18px);
+    color:#e8f6ff;
+    cursor:pointer;
+    touch-action:manipulation;
+    transition:transform .1s ease, border-color .15s ease, background .15s ease;
+  }
+  .diff-btn .diff-age{ font-size:0.62em; opacity:0.75; font-weight:600; }
+  .diff-btn.active{
+    border-color:var(--neon-yellow);
+    background:rgba(255,225,77,0.14);
+    box-shadow:0 0 16px rgba(255,225,77,0.45);
+    transform:scale(1.05);
   }
 
-  #startScreen .stars-decor{
-    position:absolute; inset:0; pointer-events:none; z-index:-1;
+  /* ---------- how to play ---------- */
+  .howto-list{
+    display:flex; flex-direction:column; gap:12px;
+    width:100%; max-width:480px;
   }
+  .howto-item{
+    display:flex; align-items:flex-start; gap:12px;
+    background:rgba(255,255,255,0.06);
+    border:2px solid rgba(77,234,255,0.3);
+    border-radius:16px;
+    padding:10px 16px;
+    text-align:left;
+    font-size:clamp(13px,3.4vw,16px);
+    color:#e8f6ff;
+    line-height:1.35;
+  }
+  .howto-icon{ font-size:1.5em; line-height:1; flex-shrink:0; }
 
   /* ---------- HUD ---------- */
   #hud{
@@ -161,8 +201,8 @@
   #shieldsDisplay.warn{ animation:shieldWarn 0.7s ease-in-out infinite; }
   @keyframes shieldWarn{ 0%,100%{ filter:drop-shadow(0 0 6px rgba(255,77,94,0.9)); } 50%{ filter:drop-shadow(0 0 18px rgba(255,77,94,1)); } }
 
-  #muteBtn{
-    position:fixed; top:calc(10px + env(safe-area-inset-top)); right:10px; z-index:16;
+  .icon-btn{
+    position:fixed; top:calc(10px + env(safe-area-inset-top)); z-index:16;
     width:48px; height:48px; border-radius:50%;
     background:rgba(6,8,30,0.6); border:2px solid rgba(77,234,255,0.5);
     color:#fff; font-size:20px; cursor:pointer;
@@ -170,6 +210,8 @@
     pointer-events:all;
     touch-action:manipulation;
   }
+  #muteBtn{ right:10px; }
+  #pauseBtn{ left:10px; }
 
   /* ---------- level up overlay ---------- */
   #levelUpOverlay{
@@ -233,21 +275,48 @@
   </div>
   <div id="shieldsDisplay"></div>
 </div>
-<button id="muteBtn" aria-label="Mute">🔊</button>
+<button id="muteBtn" class="icon-btn" aria-label="Mute">🔊</button>
+<button id="pauseBtn" class="icon-btn hidden" aria-label="Pause">⏸</button>
 
 <!-- ============================= Level Up celebration ============================= -->
 <div id="levelUpOverlay"><div id="levelUpText">LEVEL UP!</div></div>
+
+<!-- ============================= Pause Screen ============================= -->
+<div id="pauseScreen" class="screen hidden">
+  <h2 class="glow-title" style="font-size:clamp(30px,8vw,54px);">PAUSED</h2>
+  <button class="big-btn" id="resumeBtn">▶ RESUME</button>
+  <button class="big-btn secondary-btn" id="pauseMenuBtn">🏠 MAIN MENU</button>
+</div>
 
 <!-- ============================= Start Screen ============================= -->
 <div id="startScreen" class="screen">
   <h1 class="glow-title">MATH GALAXY<br>DEFENDER</h1>
   <div class="subtitle">Blast the asteroid with the right answer!</div>
   <div class="high-score-line">🏆 High Score: <span id="startHighScore">0</span></div>
-  <label class="toggle-row" for="countingModeToggle">
-    <input type="checkbox" id="countingModeToggle">
-    Counting Mode <span style="opacity:.75;">(ages 4–6)</span>
-  </label>
+  <div class="difficulty-label">Choose a difficulty:</div>
+  <div class="difficulty-row" id="difficultyRow">
+    <div class="diff-btn" data-hardness="easy">🐣 Easy<span class="diff-age">Ages 4–6</span></div>
+    <div class="diff-btn" data-hardness="medium">🚀 Medium<span class="diff-age">Ages 7–9</span></div>
+    <div class="diff-btn" data-hardness="hard">⭐ Hard<span class="diff-age">Ages 10+</span></div>
+  </div>
   <button class="big-btn" id="playBtn">▶ PLAY</button>
+  <button class="big-btn secondary-btn" id="howToBtn">❓ HOW TO PLAY</button>
+</div>
+
+<!-- ============================= How To Play Screen ============================= -->
+<div id="howToScreen" class="screen hidden">
+  <h2 class="glow-title" style="font-size:clamp(28px,7vw,44px);">HOW TO PLAY</h2>
+  <div class="howto-list">
+    <div class="howto-item"><span class="howto-icon">🔢</span><span>An equation appears at the top — find the asteroid showing the right answer!</span></div>
+    <div class="howto-item"><span class="howto-icon">💥</span><span>Tap or click the correct asteroid — your ship blasts it with a laser.</span></div>
+    <div class="howto-item"><span class="howto-icon">❌</span><span>Tap a wrong one and it flashes red — that costs you points.</span></div>
+    <div class="howto-item"><span class="howto-icon">🛡️</span><span>If an asteroid reaches Earth, you lose a shield. Lose all 3 and it's game over!</span></div>
+    <div class="howto-item"><span class="howto-icon">🔥</span><span>Chain correct answers in a row to build a COMBO for bonus points.</span></div>
+    <div class="howto-item"><span class="howto-icon">⭐</span><span>Level up every 8 correct answers — the math gets tougher and asteroids speed up.</span></div>
+    <div class="howto-item"><span class="howto-icon">🐣</span><span>Pick Easy, Medium, or Hard on the main menu to match your age.</span></div>
+    <div class="howto-item"><span class="howto-icon">⏸️</span><span>Tap the pause button (or press Esc) anytime to take a break.</span></div>
+  </div>
+  <button class="big-btn" id="howToBackBtn">👍 GOT IT!</button>
 </div>
 
 <!-- ============================= Game Over Screen ============================= -->
@@ -258,6 +327,7 @@
   <div id="finalHighScore">High Score: 0</div>
   <div id="newHighBadge" class="hidden">🌟 NEW HIGH SCORE! 🌟</div>
   <button class="big-btn" id="playAgainBtn">🔁 PLAY AGAIN</button>
+  <button class="big-btn secondary-btn" id="gameOverMenuBtn">🏠 MAIN MENU</button>
 </div>
 
 <script>
@@ -396,27 +466,71 @@ const AudioEngine = (function(){
 /* -------------------------------- 3. Storage -------------------------------- */
 const Storage = {
   KEY:'mgd_highscore_v1',
+  HARDNESS_KEY:'mgd_hardness_v1',
   getHighScore(){
     try{ return parseInt(localStorage.getItem(this.KEY),10) || 0; }catch(e){ return 0; }
   },
   setHighScore(v){
     try{ localStorage.setItem(this.KEY, String(v)); }catch(e){}
+  },
+  getHardness(){
+    try{
+      const v = localStorage.getItem(this.HARDNESS_KEY);
+      return (v==='easy'||v==='medium'||v==='hard') ? v : 'medium';
+    }catch(e){ return 'medium'; }
+  },
+  setHardness(v){
+    try{ localStorage.setItem(this.HARDNESS_KEY, v); }catch(e){}
   }
 };
 
 /* -------------------------------- 4. Math problem generator -------------------------------- */
 /*
-  Level design:
-   1-2: addition within 10, slow
-   3-4: subtraction, no negatives, slightly faster
-   5-6: add/sub within 20, decoys close to correct answer
-   7+ : multiplication tables up to 10, speed increases (capped)
+  Hardness (chosen once on the start screen, persisted) sets the overall math
+  scope and pacing for an age group. In-run "Level" (shown live in the HUD) is
+  a separate progression counter that advances every 8 correct answers and
+  ramps difficulty *within* the chosen hardness tier — the two are independent.
 */
-function getLevelParams(level){
-  if(level <= 2)  return { ops:['+'], maxOperand:10, maxResult:10, close:false, speedBase:46 };
-  if(level <= 4)  return { ops:['-'], maxOperand:10, maxResult:10, close:false, speedBase:62 };
-  if(level <= 6)  return { ops:['+','-'], maxOperand:20, maxResult:20, close:true,  speedBase:78 };
-  return          { ops:['*'], maxOperand:10, maxResult:100, close:true, speedBase: Math.min(96 + (level-7)*10, 210) };
+const HARDNESS = {
+  easy:{
+    asteroidCount:()=> 3,
+    speedBase:(level)=> Math.min(30 + (level-1)*5, 95),
+    stages:[
+      {upTo:2, ops:['+'],       maxOperand:5,  maxResult:5,   close:false},
+      {upTo:4, ops:['-'],       maxOperand:8,  maxResult:8,   close:false},
+      {upTo:6, ops:['+','-'],   maxOperand:12, maxResult:12,  close:false},
+      {upTo:Infinity, ops:['*'], maxOperand:5, maxResult:25,  close:true}
+    ]
+  },
+  medium:{
+    asteroidCount:()=> randInt(3,4),
+    speedBase:(level)=> level<=2 ? 46 : level<=4 ? 62 : level<=6 ? 78 : Math.min(96 + (level-7)*10, 210),
+    stages:[
+      {upTo:2, ops:['+'],       maxOperand:10, maxResult:10,  close:false},
+      {upTo:4, ops:['-'],       maxOperand:10, maxResult:10,  close:false},
+      {upTo:6, ops:['+','-'],   maxOperand:20, maxResult:20,  close:true},
+      {upTo:Infinity, ops:['*'], maxOperand:10, maxResult:100, close:true}
+    ]
+  },
+  hard:{
+    asteroidCount:()=> randInt(4,5),
+    speedBase:(level)=> Math.min(75 + (level-1)*14, 250),
+    stages:[
+      {upTo:1, ops:['+','-'],   maxOperand:20, maxResult:20,  close:true},
+      {upTo:3, ops:['*'],       maxOperand:10, maxResult:100, close:true},
+      {upTo:Infinity, ops:['*'], maxOperand:10, maxResult:100, close:true}
+    ]
+  }
+};
+
+function getLevelParams(level, hardness){
+  const cfg = HARDNESS[hardness] || HARDNESS.medium;
+  const stage = cfg.stages.find(s=> level <= s.upTo) || cfg.stages[cfg.stages.length-1];
+  return {
+    ops:stage.ops, maxOperand:stage.maxOperand, maxResult:stage.maxResult, close:stage.close,
+    speedBase:cfg.speedBase(level),
+    asteroidCount:cfg.asteroidCount()
+  };
 }
 
 function generateDecoys(correct, count, opts){
@@ -464,27 +578,13 @@ function generateDecoys(correct, count, opts){
   return decoys;
 }
 
-function generateProblem(level, countingMode){
-  if(countingMode){
-    const target = randInt(1,10);
-    const count = randInt(3,4);
-    const decoys = generateDecoys(target, count-1, {close:true, minVal:1, maxVal:10});
-    return {
-      promptText: `Tap ${target}!`,
-      correct: target,
-      decoys,
-      isCounting: true
-    };
-  }
-
-  const params = getLevelParams(level);
+function generateProblem(params){
   const op = choice(params.ops);
   let a,b,correct,promptText;
 
   if(op === '+'){
     a = randInt(0, params.maxOperand);
-    b = randInt(0, params.maxOperand - (params.maxResult===10 ? 0 : 0));
-    // keep sum within maxResult
+    b = randInt(0, params.maxOperand);
     if(a+b > params.maxResult) b = clamp(params.maxResult - a, 0, params.maxOperand);
     correct = a+b;
     promptText = `${a} + ${b}`;
@@ -494,44 +594,41 @@ function generateProblem(level, countingMode){
     correct = a-b;
     promptText = `${a} - ${b}`;
   } else { // multiplication
-    a = randInt(1,10);
-    b = randInt(1,10);
+    a = randInt(1, params.maxOperand);
+    b = randInt(1, params.maxOperand);
     correct = a*b;
     promptText = `${a} × ${b}`;
   }
 
-  const count = randInt(3,4);
-  const decoys = generateDecoys(correct, count-1, {
+  const decoys = generateDecoys(correct, params.asteroidCount-1, {
     close:params.close,
     minVal:0,
-    maxVal: op==='*' ? 100 : Math.max(params.maxResult, correct+8)
+    maxVal: op==='*' ? params.maxResult : Math.max(params.maxResult, correct+8)
   });
 
-  return { promptText, correct, decoys, isCounting:false };
+  return { promptText, correct, decoys };
 }
 
 // ---- lightweight self-test (runs once at load, logs to console only) ----
 (function runMathGenSelfTest(){
   try{
     let failures = 0, runs = 0;
-    for(let lvl=1; lvl<=12; lvl++){
-      for(let i=0;i<200;i++){
-        const p = generateProblem(lvl, false);
-        runs++;
-        const all = [p.correct, ...p.decoys];
-        const uniq = new Set(all);
-        if(uniq.size !== all.length) failures++;
-        if(p.decoys.includes(p.correct)) failures++;
-        if(all.some(v=> v<0)) failures++;
+    for(const hardness of ['easy','medium','hard']){
+      for(let lvl=1; lvl<=12; lvl++){
+        for(let i=0;i<100;i++){
+          const params = getLevelParams(lvl, hardness);
+          const p = generateProblem(params);
+          runs++;
+          const all = [p.correct, ...p.decoys];
+          const uniq = new Set(all);
+          if(uniq.size !== all.length) failures++;
+          if(p.decoys.includes(p.correct)) failures++;
+          if(all.some(v=> v<0)) failures++;
+          if(all.length !== params.asteroidCount) failures++;
+        }
       }
     }
-    for(let i=0;i<200;i++){
-      const p = generateProblem(1, true);
-      runs++;
-      const all = [p.correct, ...p.decoys];
-      if(new Set(all).size !== all.length) failures++;
-    }
-    console.log(`[MathGalaxyDefender self-test] ${runs} problems generated, ${failures} failures.`);
+    console.log(`[MathGalaxyDefender self-test] ${runs} problems generated across 3 hardness tiers, ${failures} failures.`);
   }catch(e){ console.warn('[MathGalaxyDefender self-test] error', e); }
 })();
 
@@ -656,7 +753,7 @@ class ScorePopups{
 /* -------------------------------- 6. Asteroid + Ship -------------------------------- */
 let ASTEROID_ID = 0;
 class Asteroid{
-  constructor(x,y,radius,value,isCorrect,speed,isCounting){
+  constructor(x,y,radius,value,isCorrect,speed){
     this.id = ++ASTEROID_ID;
     this.x=x; this.y=y; this.radius=radius;
     this.value=value; this.isCorrect=isCorrect;
@@ -666,7 +763,7 @@ class Asteroid{
     this.flashTimer = 0;
     this.rotation = rand(0,Math.PI*2);
     this.rotSpeed = rand(-0.6,0.6);
-    this.hue = isCounting ? 200 : rand(0,360);
+    this.hue = rand(0,360);
     this.wobble = rand(0,Math.PI*2);
     this.scale = 1;
     this.alpha = 1;
@@ -724,37 +821,10 @@ class Asteroid{
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    if(this.dotMode){
-      drawDots(ctx, this.value, this.radius*0.62);
-    }else{
-      const fontSize = Math.round(this.radius*0.72);
-      ctx.font = `800 ${fontSize}px Trebuchet MS, sans-serif`;
-      ctx.fillText(String(this.value), 0, 1);
-    }
+    const fontSize = Math.round(this.radius*0.72);
+    ctx.font = `800 ${fontSize}px Trebuchet MS, sans-serif`;
+    ctx.fillText(String(this.value), 0, 1);
     ctx.restore();
-  }
-}
-
-function drawDots(ctx, n, area){
-  const positions = {
-    1:[[0,0]],
-    2:[[-0.5,-0.5],[0.5,0.5]],
-    3:[[-0.5,-0.5],[0,0],[0.5,0.5]],
-    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],
-    5:[[-0.5,-0.5],[0.5,-0.5],[0,0],[-0.5,0.5],[0.5,0.5]],
-    6:[[-0.5,-0.6],[0.5,-0.6],[-0.5,0],[0.5,0],[-0.5,0.6],[0.5,0.6]],
-    7:[[-0.5,-0.6],[0.5,-0.6],[-0.5,0],[0,0],[0.5,0],[-0.5,0.6],[0.5,0.6]],
-    8:[[-0.5,-0.6],[0.5,-0.6],[-0.5,-0.1],[0.5,-0.1],[-0.5,0.35],[0.5,0.35],[-0.5,0.8],[0.5,0.8]],
-    9:[[-0.5,-0.6],[0,-0.6],[0.5,-0.6],[-0.5,0],[0,0],[0.5,0],[-0.5,0.6],[0,0.6],[0.5,0.6]],
-    10:[[-0.5,-0.7],[0,-0.7],[0.5,-0.7],[-0.5,-0.1],[0.5,-0.1],[-0.5,0.5],[0.5,0.5],[0,0],[-0.15,-0.3],[0.15,-0.3]]
-  };
-  const pts = positions[n] || positions[Math.min(10,Math.max(1,n))];
-  const dotR = area*0.24;
-  ctx.shadowBlur = 6;
-  for(const [px,py] of pts){
-    ctx.beginPath();
-    ctx.arc(px*area, py*area, dotR, 0, Math.PI*2);
-    ctx.fill();
   }
 }
 
@@ -835,7 +905,8 @@ const Game = {
   w:0, h:0, dpr:1,
 
   state:'start', // start | playing | gameover
-  countingMode:false,
+  hardness:'medium', // easy | medium | hard — chosen on the start screen, independent of in-run "level"
+  paused:false,
 
   score:0, highScore:0,
   level:1, correctCountForLevel:0,
@@ -847,6 +918,7 @@ const Game = {
   roundActive:false,
   nextRoundTimer:0,
 
+  gameTime:0, // seconds of active (unpaused) play; drives invincibility timing so pause freezes it
   invincibleUntil:0,
   levelUpTimer:0,
 
@@ -873,6 +945,7 @@ const Game = {
     this.popups = new ScorePopups();
     this.highScore = Storage.getHighScore();
     document.getElementById('startHighScore').textContent = this.highScore;
+    this.hardness = Storage.getHardness();
 
     this.resize();
     window.addEventListener('resize', ()=>this.resize());
@@ -880,8 +953,23 @@ const Game = {
 
     this.bindInput();
     this.bindUI();
+    this.bindDifficultySelector();
 
     requestAnimationFrame(this.loop.bind(this));
+  },
+
+  bindDifficultySelector(){
+    const buttons = Array.from(document.querySelectorAll('.diff-btn'));
+    buttons.forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.hardness === this.hardness);
+      btn.addEventListener('click', ()=>{
+        buttons.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        this.hardness = btn.dataset.hardness;
+        Storage.setHardness(this.hardness);
+        AudioEngine.init(); AudioEngine.resume(); AudioEngine.click();
+      });
+    });
   },
 
   resize(){
@@ -911,26 +999,77 @@ const Game = {
 
   /* ---------------- lifecycle ---------------- */
   startGame(){
-    this.countingMode = document.getElementById('countingModeToggle').checked;
     this.score = 0; this.level = 1; this.correctCountForLevel = 0;
     this.shields = this.maxShields;
     this.combo = 0; this.comboMultiplier = 1;
     this.correctTotal = 0; this.wrongTotal = 0;
     this.asteroids = [];
     this.roundActive = false; this.nextRoundTimer = 0.3;
-    this.invincibleUntil = 0; this.levelUpTimer = 0;
+    this.gameTime = 0; this.invincibleUntil = 0; this.levelUpTimer = 0;
+    this.paused = false;
     this.ship.busy = false; this.ship.rotation = 0; this.ship.targetRotation = 0;
 
     document.getElementById('startScreen').classList.add('hidden');
     document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('pauseScreen').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden');
+    const pauseBtn = document.getElementById('pauseBtn');
+    pauseBtn.classList.remove('hidden');
+    pauseBtn.textContent = '⏸';
     this.updateHUD();
     this.state = 'playing';
   },
 
+  pauseGame(){
+    if(this.state !== 'playing' || this.paused) return;
+    this.paused = true;
+    document.getElementById('pauseScreen').classList.remove('hidden');
+    document.getElementById('pauseBtn').textContent = '▶';
+  },
+
+  resumeGame(){
+    if(!this.paused) return;
+    this.paused = false;
+    document.getElementById('pauseScreen').classList.add('hidden');
+    document.getElementById('pauseBtn').textContent = '⏸';
+  },
+
+  togglePause(){
+    if(this.paused) this.resumeGame(); else this.pauseGame();
+  },
+
+  goToMainMenu(){
+    if(this.score > this.highScore){
+      this.highScore = this.score;
+      Storage.setHighScore(this.highScore);
+    }
+    this.state = 'start';
+    this.paused = false;
+    document.getElementById('pauseScreen').classList.add('hidden');
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('pauseBtn').classList.add('hidden');
+    document.getElementById('startHighScore').textContent = this.highScore;
+    document.getElementById('howToScreen').classList.add('hidden');
+    document.getElementById('startScreen').classList.remove('hidden');
+  },
+
+  showHowTo(){
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('howToScreen').classList.remove('hidden');
+  },
+
+  hideHowTo(){
+    document.getElementById('howToScreen').classList.add('hidden');
+    document.getElementById('startScreen').classList.remove('hidden');
+  },
+
   gameOver(){
     this.state = 'gameover';
+    this.paused = false;
     document.getElementById('hud').classList.add('hidden');
+    document.getElementById('pauseBtn').classList.add('hidden');
+    document.getElementById('pauseScreen').classList.add('hidden');
     let isNewHigh = false;
     if(this.score > this.highScore){
       this.highScore = this.score;
@@ -975,11 +1114,15 @@ const Game = {
 
   /* ---------------- round management ---------------- */
   spawnRound(){
-    const problem = generateProblem(this.level, this.countingMode);
+    const radius = this.asteroidRadius();
+    const params = getLevelParams(this.level, this.hardness);
+    // cap asteroid count so lanes never overlap on narrow screens
+    const maxFit = Math.max(3, Math.floor(this.w / (radius*2 + 14)));
+    params.asteroidCount = Math.min(params.asteroidCount, maxFit);
+
+    const problem = generateProblem(params);
     const values = shuffle([problem.correct, ...problem.decoys]);
     const n = values.length;
-    const radius = this.asteroidRadius();
-    const params = getLevelParams(this.level);
     const laneW = this.w / n;
 
     this.asteroids = values.map((v,i)=>{
@@ -987,9 +1130,7 @@ const Game = {
       const x = clamp(laneX, radius+8, this.w-radius-8);
       const y = -radius - rand(0,120) - i*40;
       const speed = params.speedBase * rand(0.9,1.15);
-      const a = new Asteroid(x,y,radius,v, v===problem.correct, speed, problem.isCounting);
-      a.dotMode = problem.isCounting;
-      return a;
+      return new Asteroid(x,y,radius,v, v===problem.correct, speed);
     });
 
     document.getElementById('equationPrompt').textContent = problem.promptText;
@@ -998,7 +1139,7 @@ const Game = {
 
   /* ---------------- resolving shots ---------------- */
   tryFireAt(px,py){
-    if(this.state !== 'playing' || this.ship.busy) return;
+    if(this.state !== 'playing' || this.paused || this.ship.busy) return;
     let hit = null, bestDist = Infinity;
     for(const a of this.asteroids){
       if(a.state !== 'falling') continue;
@@ -1011,7 +1152,7 @@ const Game = {
     this.ship.aimAt(hit.x, hit.y);
     const aimDelay = 140;
     setTimeout(()=>{
-      if(this.state !== 'playing'){ this.ship.busy=false; return; }
+      if(this.state !== 'playing' || this.paused){ this.ship.busy=false; return; }
       this.fireLaser(hit);
     }, aimDelay);
   },
@@ -1023,6 +1164,7 @@ const Game = {
     AudioEngine.laser(this.combo*0.01);
 
     setTimeout(()=>{
+      if(this.state !== 'playing' || this.paused){ this.ship.busy = false; return; }
       if(target.isCorrect) this.resolveCorrect(target);
       else this.resolveWrong(target);
       this.ship.busy = false;
@@ -1079,7 +1221,7 @@ const Game = {
   levelUp(){
     this.level++;
     this.correctCountForLevel = 0;
-    this.invincibleUntil = performance.now() + 2000;
+    this.invincibleUntil = this.gameTime + 2.0;
     this.levelUpTimer = 2.0;
     AudioEngine.levelUp();
 
@@ -1132,7 +1274,8 @@ const Game = {
 
     if(this.state !== 'playing') return;
 
-    const invincible = performance.now() < this.invincibleUntil;
+    this.gameTime += dt;
+    const invincible = this.gameTime < this.invincibleUntil;
 
     let roundNeedsRefill = false;
     for(const a of this.asteroids){
@@ -1187,13 +1330,13 @@ const Game = {
     this.drawEarth(ctx);
 
     // ground warning glow if an asteroid is close
-    const invincible = performance.now() < this.invincibleUntil;
+    const invincible = this.gameTime < this.invincibleUntil;
     let danger = false;
     for(const a of this.asteroids){
       if(a.state==='falling' && a.y + a.radius > this.groundY - 90) danger = true;
     }
     if(danger && !invincible){
-      const pulse = 0.25 + 0.2*Math.sin(performance.now()/120);
+      const pulse = 0.25 + 0.2*Math.sin(this.gameTime*8.333);
       ctx.save();
       ctx.globalAlpha = pulse;
       const grad = ctx.createLinearGradient(0,this.groundY-120,0,this.groundY);
@@ -1222,7 +1365,7 @@ const Game = {
     }
 
     if(this.state === 'playing' || this.levelUpTimer>0){
-      const flashAlpha = invincible ? (0.6+0.4*Math.sin(performance.now()/80)) : 1;
+      const flashAlpha = invincible ? (0.6+0.4*Math.sin(this.gameTime*12.5)) : 1;
       ctx.save();
       ctx.globalAlpha = flashAlpha;
       this.ship.draw(ctx, this.comboMultiplier);
@@ -1275,7 +1418,7 @@ const Game = {
     dt = clamp(dt, 0, 0.05);
     this.lastTs = ts;
 
-    this.update(dt);
+    if(!this.paused) this.update(dt);
     this.draw();
 
     requestAnimationFrame(this.loop.bind(this));
@@ -1317,10 +1460,19 @@ const Game = {
       });
     }
 
-    // block page scroll / pull-to-refresh / pinch-zoom globally during play
-    document.addEventListener('touchmove', (e)=>{ e.preventDefault(); }, {passive:false});
+    // block page scroll / pull-to-refresh / pinch-zoom globally during play,
+    // but allow scrolling inside overlay screens (e.g. a tall How To Play list)
+    document.addEventListener('touchmove', (e)=>{
+      if(e.target.closest('.screen')) return;
+      e.preventDefault();
+    }, {passive:false});
     document.addEventListener('gesturestart', (e)=> e.preventDefault());
     canvas.addEventListener('contextmenu', (e)=> e.preventDefault());
+
+    // desktop convenience: Escape toggles pause
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && this.state === 'playing') this.togglePause();
+    });
   },
 
   bindUI(){
@@ -1331,6 +1483,30 @@ const Game = {
     document.getElementById('playAgainBtn').addEventListener('click', ()=>{
       AudioEngine.init(); AudioEngine.resume(); AudioEngine.click();
       this.startGame();
+    });
+    document.getElementById('gameOverMenuBtn').addEventListener('click', ()=>{
+      AudioEngine.init(); AudioEngine.resume(); AudioEngine.click();
+      this.goToMainMenu();
+    });
+    document.getElementById('pauseBtn').addEventListener('click', ()=>{
+      AudioEngine.init(); AudioEngine.resume(); AudioEngine.click();
+      this.togglePause();
+    });
+    document.getElementById('resumeBtn').addEventListener('click', ()=>{
+      AudioEngine.click();
+      this.resumeGame();
+    });
+    document.getElementById('pauseMenuBtn').addEventListener('click', ()=>{
+      AudioEngine.click();
+      this.goToMainMenu();
+    });
+    document.getElementById('howToBtn').addEventListener('click', ()=>{
+      AudioEngine.init(); AudioEngine.resume(); AudioEngine.click();
+      this.showHowTo();
+    });
+    document.getElementById('howToBackBtn').addEventListener('click', ()=>{
+      AudioEngine.click();
+      this.hideHowTo();
     });
     const muteBtn = document.getElementById('muteBtn');
     let muted = false;
